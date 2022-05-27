@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import open3d as o3d
 from time import time
@@ -34,11 +36,11 @@ class VoxelDSampleSort:
 
         # 5. center sample or random sample
         if self.mode == "center":
-            return self.center_sample(sorted_pcd, coords, sorted_idx)
+            return self.center_sample(sorted_pcd, coords)
         else:
-            return self.random_sample(sorted_pcd, coords, sorted_idx)
+            return self.random_sample(sorted_pcd, coords)
 
-    def center_sample(self, sorted_pcd, coords, sorted_idx):
+    def center_sample(self, sorted_pcd, coords):
         valid_voxels = np.unique(coords)
         ret = np.zeros(shape=[valid_voxels.shape[0], 3], dtype=np.float32)
         pt_idx = 0
@@ -51,8 +53,20 @@ class VoxelDSampleSort:
             ret[i] = ret[i] / num_pt_in_voxel
         return ret
 
-    def random_sample(self, sorted_pcd, coords, sorted_idx):
-        pass
+    def random_sample(self, sorted_pcd, coords):
+        valid_voxels = np.unique(coords)
+        ret = np.zeros(shape=[valid_voxels.shape[0], 3], dtype=np.float32)
+        pt_idx = 0
+        for i, voxel in enumerate(valid_voxels):
+            num_pt_in_voxel = 0
+            first_pt = pt_idx
+            while pt_idx < coords.shape[0] and voxel == coords[pt_idx]:
+                pt_idx += 1
+                num_pt_in_voxel += 1
+            # ret[i] = sorted_pcd[first_pt + random.randint(0, 10000) % num_pt_in_voxel]
+            ret[i] = sorted_pcd[pt_idx - 1]
+
+        return ret
 
 
 class VoxelDSampleHashMap:
@@ -71,5 +85,12 @@ if __name__ == '__main__':
     toc = time()
     print("Voxel Downsampl based center: {} ms".format((toc - tic) * 1000))
     print("pointnum after voxel downsample: {}".format(ret.shape[0]))
-    # show_ptxyz(ret)
+
+    dsampler2 = VoxelDSampleSort([0.2, 0.2, 0.2], "random")
+    tic = time()
+    ret2 = dsampler2.downsample(pc)
+    toc = time()
+    print("Voxel Downsampl based center: {} ms".format((toc - tic) * 1000))
+    print("pointnum after voxel downsample: {}".format(ret2.shape[0]))
+    # show_ptxyz(ret2)
 

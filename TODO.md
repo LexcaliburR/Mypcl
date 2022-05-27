@@ -18,7 +18,7 @@
       - [ ] python
 2. Downsampling
     - Voxel Grid Downsampling
-      - sort based
+      - sort base[center sample mode && random sample mode]
         - [ ] cpp
         - [ ] cuda
         - [x] python
