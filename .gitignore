@@ -3,5 +3,6 @@
 build
 *.so
 *.a
-# *test*
+# *examples*
 # *Test*
+lib
