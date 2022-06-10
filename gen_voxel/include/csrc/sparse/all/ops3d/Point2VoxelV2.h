@@ -13,12 +13,14 @@ using TensorView = cumm::common::TensorView;
 using Point2VoxelCommon = csrc::sparse::all::ops3d::p2v_c::Point2VoxelCommon;
 using Layout = csrc::sparse::all::ops3d::layout_ns::TensorGeneric;
 
-struct Point2Voxel
+struct Point2VoxelV2
 {
     tv::Tensor hashdata;
     tv::Tensor point_indice_data;
     tv::Tensor voxels;
+    tv::Tensor voxels_out;
     tv::Tensor indices;
+    tv::Tensor indices_out;
     tv::Tensor num_per_voxel;
     tv::array<float, 3> vsize;
     tv::array<float, 6> coors_range;
@@ -33,9 +35,9 @@ struct Point2Voxel
      * @param max_num_voxels
      * @param max_num_points_per_voxel
      */
-    Point2Voxel(std::array<float, 3> vsize_xyz,
-                std::array<float, 6> coors_range_xyz, int num_point_features,
-                int max_num_voxels, int max_num_points_per_voxel);
+    Point2VoxelV2(std::array<float, 3> vsize_xyz,
+                  std::array<float, 6> coors_range_xyz, int num_point_features,
+                  int max_num_voxels, int max_num_points_per_voxel);
     /**
      * @param points
      * @param clear_voxels
@@ -43,7 +45,7 @@ struct Point2Voxel
      * @param stream_int
      */
     std::tuple<tv::Tensor, tv::Tensor, tv::Tensor> point_to_voxel_hash(
-        tv::Tensor points, bool clear_voxels = true, bool empty_mean = false,
+        tv::Tensor points, bool clear_voxels = true, bool padding = false,
         std::uintptr_t stream_int = 0);
     /**
      * @param points
@@ -58,19 +60,18 @@ struct Point2Voxel
      * @param grid_stride
      * @param coors_range
      * @param clear_voxels whether to clear voxel buffer
-     * @param empty_mean true: fill the empty point feature with the mean val of
-     * valid points in this voxel, false: fill the empty point featuer with zero
+     * @param padding whether to pad to predefined max
      * @param stream_int
      */
     static std::tuple<tv::Tensor, tv::Tensor, tv::Tensor>
     point_to_voxel_hash_static(
-        tv::Tensor points, tv::Tensor voxels, tv::Tensor indices,
-        tv::Tensor num_per_voxel, tv::Tensor hashdata,
-        tv::Tensor point_indice_data, tv::Tensor points_voxel_id,
-        std::array<float, 3> vsize, std::array<int, 3> grid_size,
-        std::array<int, 3> grid_stride, std::array<float, 6> coors_range,
-        bool clear_voxels = true, bool empty_mean = false,
-        std::uintptr_t stream_int = 0);
+        tv::Tensor points, tv::Tensor voxels, tv::Tensor voxels_out,
+        tv::Tensor indices, tv::Tensor indices_out, tv::Tensor num_per_voxel,
+        tv::Tensor hashdata, tv::Tensor point_indice_data,
+        tv::Tensor points_voxel_id, std::array<float, 3> vsize,
+        std::array<int, 3> grid_size, std::array<int, 3> grid_stride,
+        std::array<float, 6> coors_range, bool clear_voxels = true,
+        bool padding = false, std::uintptr_t stream_int = 0);
 };
 }  // namespace ops3d
 }  // namespace all

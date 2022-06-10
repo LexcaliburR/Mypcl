@@ -100,12 +100,28 @@ __global__ void voxel_empty_fill_mean(float* voxels, int* num_per_voxel,
                                       int num_voxels, int num_points_per_voxel,
                                       int num_voxel_features);
 /**
+ * @param voxels
+ * @param num_per_voxel
+ * @param num_voxels
+ * @param num_points_per_voxel
+ * @param num_voxel_features
+ */
+__global__ void voxelout_gather_mean(float* voxels, float* voxels_out,
+                                     int* num_per_voxel, int num_voxels,
+                                     int num_points_per_voxel,
+                                     int num_voxel_features);
+/**
  * @param num_per_voxel
  * @param num_voxels
  * @param num_points_per_voxel
  */
 __global__ void limit_num_per_voxel_value(int* num_per_voxel, int num_voxels,
                                           int num_points_per_voxel);
+
+__global__ void indicesout_gather(int* indices, int* indices_out,
+                                  int num_voxels, int num_coords,
+                                  int num_coords_out);
+
 struct Point2VoxelKernel
 {};
 }  // namespace kernel

@@ -6,10 +6,11 @@
 
 #include <tensorview/tensor.h>
 #include <tensorview/cuda/driverops.h>
+#include <csrc/sparse/all/ops3d/Point2Voxel.h>
+#include <csrc/sparse/all/ops3d/Point2VoxelV2.h>
 
 #include "common/tic_toc.h"
 #include "common/binfile_tools.h"
-#include "csrc/sparse/all/ops3d/Point2Voxel.h"
 
 using namespace lidar::common::utils;
 using namespace csrc::sparse::all::ops3d;
@@ -30,11 +31,11 @@ int main(int argc, char* argv[])
 
     reader.read_from_file_rootpath(file_name, points, &point_num);
 
-    Point2Voxel gen(
+    Point2VoxelV2 gen(
         {0.1f, 0.1f, 0.1f}, {-80, -80, -6, 80, 80, 6}, 5, 200000, 5);
 
     PERF_BLOCK_START(true);
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 1; ++i) {
         LOG(INFO) << "+++++++++++++++++++++++++++++++++++++++++";
 
         auto points_tv =
@@ -47,12 +48,34 @@ int main(int argc, char* argv[])
         tv::Tensor num_p_in_vx_th_cuda;
 
         std::tie(voxels_th_cuda, indices_th_cuda, num_p_in_vx_th_cuda) =
-            gen.point_to_voxel_hash(points_tv_cuda);
+            gen.point_to_voxel_hash(points_tv_cuda, true, true);
+        auto voxels_th = voxels_th_cuda.cpu();
+        auto indices_th = indices_th_cuda.cpu();
+
+        // auto num_p_in_vx_th = num_p_in_vx_th_cuda.cpu();
+        LOG(INFO) << "voxels shape : " << voxels_th_cuda.shape();
+        LOG(INFO) << "indices shape : " << indices_th_cuda.shape();
+        LOG(INFO) << "num per voxel shape : " << num_p_in_vx_th_cuda.shape();
+        LOG(INFO) << voxels_th[0];
+        LOG(INFO) << indices_th[0];
+        LOG(INFO) << voxels_th[1];
+        LOG(INFO) << indices_th[1];
+
         PERF_BLOCK_END("cuda voxel");
+        // bool clear_voxels, bool empty_mean
+        std::tie(voxels_th_cuda, indices_th_cuda, num_p_in_vx_th_cuda) =
+            gen.point_to_voxel_hash(points_tv_cuda, true, false);
 
-        // auto voxels_th = voxels_th_cuda.cpu();
+        voxels_th = voxels_th_cuda.cpu();
+        indices_th = indices_th_cuda.cpu();
+        // voxels_th = voxels_th_cuda.cpu();
         // LOG(INFO) << voxels_th_cuda.shape();
-
+        // LOG(INFO) << voxels_th[0];
+        // PERF_BLOCK_END("cuda voxel");
+        // auto voxels_th = voxels_th_cuda.cpu();
+        LOG(INFO) << "voxels shape : " << voxels_th_cuda.shape();
+        LOG(INFO) << "indices shape : " << indices_th_cuda.shape();
+        LOG(INFO) << "num per voxel shape : " << num_p_in_vx_th_cuda.shape();
         // cpu padding
         // tv::Tensor new_vox = tv::zeros({200000, 5, 5}, tv::DType::float32);
         // std::copy(voxels_th.data<float>(),
@@ -60,43 +83,15 @@ int main(int argc, char* argv[])
         //           new_vox.data<float>());
 
         // gpu padding
-        tv::Tensor new_vox_gpu = tv::zeros(
-            {200000, 5, 5}, tv::DType::float32, voxels_th_cuda.device());
-        tv::dev2dev(new_vox_gpu.raw_data(),
-                    voxels_th_cuda.raw_data(),
-                    voxels_th_cuda.size() *
-                        tv::detail::sizeof_dtype(voxels_th_cuda.dtype()));
+        // tv::Tensor new_vox_gpu = tv::zeros(
+        //     {200000, 5, 5}, tv::DType::float32, voxels_th_cuda.device());
+        // tv::dev2dev(new_vox_gpu.raw_data(),
+        //             voxels_th_cuda.raw_data(),
+        //             voxels_th_cuda.size() *
+        //                 tv::detail::sizeof_dtype(voxels_th_cuda.dtype()));
 
         // auto voxels_th = voxels_th_cuda.cpu();
         // auto voxels_new = new_vox_gpu.cpu();
-
-        // LOG(INFO) << "-------------------------------------";
-        // LOG(INFO) << voxels_th[0];
-        // LOG(INFO) << voxels_new[0];
-
-        // LOG(INFO) << "-------------------------------------";
-        // LOG(INFO) << voxels_th[100];
-        // LOG(INFO) << voxels_new[100];
-
-        // LOG(INFO) << "-------------------------------------";
-        // LOG(INFO) << voxels_th[5000];
-        // LOG(INFO) << voxels_new[5000];
-
-        // LOG(INFO) << "-------------------------------------";
-        // LOG(INFO) << voxels_th[30000];
-        // LOG(INFO) << voxels_new[30000];
-
-        // LOG(INFO) << "-------------------------------------";
-        // LOG(INFO) << voxels_th[100000];
-        // LOG(INFO) << voxels_new[100000];
-
-        // LOG(INFO) << "-------------------------------------";
-        // LOG(INFO) << voxels_th[120000];
-        // LOG(INFO) << voxels_new[120000];
-
-        // LOG(INFO) << "-------------------------------------";
-        // LOG(INFO) << voxels_th[134005];
-        // LOG(INFO) << voxels_new[134005];
 
         PERF_BLOCK_END("padding");
     }
